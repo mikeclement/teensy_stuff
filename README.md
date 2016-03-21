@@ -1,6 +1,6 @@
 # Teensy Stuff
 
-An accumulation of headers, libraries, make files, and so on for writing software for the Teensy 3.2 microcontroller dev board.
+An accumulation of headers, libraries, make files, and so on for writing software for the Teensy 3.2 microcontroller dev board *without* requiring a Teensyduino dev environment.
 
 ## Prerequisites
 
@@ -9,7 +9,7 @@ libusb-dev is needed by `third_party/teensy_loader_cli`:
 sudo apt-get install libusb-dev
 ```
 
-**[VERIFY]** User must be in the dialout group:
+**[VERIFY IF NEEDED]** User must be in the dialout group:
 ```
 sudo adduser $USER dialout
 ```
@@ -34,14 +34,26 @@ sudo rm $ARM_TARBALL
 popd
 ```
 
-ARM toolchain should be added to the path:
+## Setting up and building a project
+
+The folder `projects/blinky` provides a minimal example, copied and derived from `third_party/Teensy3x`. An includeable makefile lives in `mk`, making it easy to write a `Makefile` for each project. Simply specify the name of the project (which will also be the basename of the hex file generated) and project-specific objects (some standard objects are included automatically), then include the base makefile:
+
 ```
-echo export PATH=/opt/gcc-arm-none-eabi-5_2-2015q4/bin:$PATH >> ~/.bashrc
-source ~/.bashrc
+PROJECT = blinky
+OBJECTS = blinky.o
+
+include ../../mk/makefile.inc
 ```
 
-## Included Software
+The `all` target builds the hex, bin, and other key files. The `upload` target additionally builds `teensy_loader_cli` and uses it to upload the built hex file to a board:
 
-`third_party/teensy_loader_cli`, the command line downloader for hex files, comes from https://github.com/PaulStoffregen/teensy_loader_cli
+```
+cd projects/blinky
+make upload
+```
 
-`third_party/Teensy3x`, which contains the basis makefile, headers, and libraries needed to build code for the Teensy 3.x without requiring the Arduino development environment, comes from http://www.seanet.com/~karllunt/bareteensy31.html
+## Included software
+
+`third_party/teensy_loader_cli`, which contains the command line downloader for hex files, comes from https://github.com/PaulStoffregen/teensy_loader_cli
+
+`third_party/Teensy3x`, which contains the basis for the makefiles, headers, and libraries used here, comes from http://www.seanet.com/~karllunt/bareteensy31.html
