@@ -4,9 +4,9 @@ An accumulation of headers, libraries, make files, and so on for writing softwar
 
 ## Prerequisites
 
-libusb-dev is needed by `third_party/teensy_loader_cli`:
+libusb-dev is needed by `third_party/teensy_loader_cli`, and libc6-i386 is needed by the ARM toolchain:
 ```
-sudo apt-get install libusb-dev
+sudo apt-get install libusb-dev libc6-i386
 ```
 
 **[VERIFY IF NEEDED]** User must be in the dialout group:
