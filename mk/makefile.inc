@@ -10,7 +10,7 @@
 
 CPU = cortex-m4
 
-OBJECTS	+= sysinit.o crt0.o
+OBJECTS	+= sysinit.o crt0.o arm_cm4.o
 
 TOOLPATH = /opt/gcc-arm-none-eabi-5_2-2015q4
 
