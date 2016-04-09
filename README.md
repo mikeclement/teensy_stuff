@@ -54,8 +54,10 @@ make upload
 
 ## Included software
 
-`third_party/teensy_loader_cli`, which contains the command line downloader for hex files, comes from https://github.com/PaulStoffregen/teensy_loader_cli
-
 `third_party/Teensy3x`, which contains the basis for the makefiles, headers, and libraries used here, comes from http://www.seanet.com/~karllunt/bareteensy31.html
 
-`third_party/usb_debug_only`, which contains some example code for using the USB port, comes from https://www.prjc.com/teensy/usb_debug_only.html
+`third_party/teensy-oscilloscope`, which contains bare metal code for initializing the USB interface, comes from https://github.com/kcuzner/teensy-oscilloscope/ (and more detail is available here: http://kevincuzner.com/2014/12/12/teensy-3-1-bare-metal-writing-a-usb-driver/)
+
+`third_party/teensy_loader_cli`, which contains the command line downloader for hex files, comes from https://github.com/PaulStoffregen/teensy_loader_cli
+
+`third_party/usb_debug_only`, which contains some *Arduino* example code for using the USB port, comes from https://www.prjc.com/teensy/usb_debug_only.html

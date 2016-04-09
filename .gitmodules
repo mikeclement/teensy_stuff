@@ -1,3 +1,6 @@
 [submodule "third_party/teensy_loader_cli"]
 	path = third_party/teensy_loader_cli
 	url = https://github.com/PaulStoffregen/teensy_loader_cli.git
+[submodule "third_party/teensy-oscilloscope"]
+	path = third_party/teensy-oscilloscope
+	url = https://github.com/kcuzner/teensy-oscilloscope.git
