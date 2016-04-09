@@ -72,9 +72,9 @@ __interrupt_vector_table:
 	.long	CAN0Msg_IRQHandler		/* CAN0 message buffer (0-15) interrupt */
 	.long	CAN0BusOff_IRQHandler	/* CAN0 Bus Off interrupt */
 	.long	CAN0Error_IRQHandler	/* CAN0 Error interrupt */
-	.long	CAN0Xmit_IRQHandler		/* CAN0 Transmit warning interrupt */  
+	.long	CAN0Xmit_IRQHandler		/* CAN0 Transmit warning interrupt */
 	.long	CAN0Rcv_IRQHandler		/* CAN0 Recieve warning interrupt */
-	.long	CAN0Wake_IRQHandler		/* CAN0 Wake Up interrupt */ 
+	.long	CAN0Wake_IRQHandler		/* CAN0 Wake Up interrupt */
     .long   I2S0_Tx_IRQHandler		/* I2S0 transmit interrupt */
     .long   I2S0_Rx_IRQHandler		/* I2S0 receive interrupt */
     .long	Reserved53_IRQHandler	/* Reserved interrupt 53 */
@@ -342,9 +342,9 @@ __interrupt_vector_table:
 	.weak	CAN0Msg_IRQHandler			/* CAN0 message buffer (0-15) interrupt */
 	.weak	CAN0BusOff_IRQHandler		/* CAN0 Bus Off interrupt */
 	.weak	CAN0Error_IRQHandler		/* CAN0 Error interrupt */
-	.weak	CAN0Xmit_IRQHandler			/* CAN0 Transmit warning interrupt */  
+	.weak	CAN0Xmit_IRQHandler			/* CAN0 Transmit warning interrupt */
 	.weak	CAN0Rcv_IRQHandler			/* CAN0 Recieve warning interrupt */
-	.weak	CAN0Wake_IRQHandler			/* CAN0 Wake Up interrupt */ 
+	.weak	CAN0Wake_IRQHandler			/* CAN0 Wake Up interrupt */
     .weak   I2S0_Tx_IRQHandler			/* I2S0 transmit interrupt */
     .weak   I2S0_Rx_IRQHandler			/* I2S0 receive interrupt */
     .weak	Reserved53_IRQHandler		/* Reserved interrupt 53 */
@@ -406,7 +406,7 @@ __interrupt_vector_table:
     .weak	Reserved109_IRQHandler		/* Reserved interrupt 109 */
     .weak   SWI_IRQHandler				/* Software interrupt */
     .weak   DefaultISR
-    
+
 
 
 /*
@@ -452,7 +452,7 @@ _startup:
  *  of RAM without fear of watchdog timeout.
  *
  *  Clear the BSS section
- */ 
+ */
 	mov r0, #0
 	ldr r1, = _start_bss
 	ldr r2, = _end_bss
@@ -468,7 +468,7 @@ _clear:
 _done_clear:
 
 
-/* 
+/*
  *  Copy data from flash initialization area to RAM
  *
  *  The three values seen here are supplied by the linker script
@@ -510,7 +510,7 @@ done_copy:
 	ldr r0, =start
 	blx r0
 	b	.					/* just in case control ever leaves main()! */
-	
+
 /*
  *  The following stub routines serve as default handlers for the
  *  above vectors (except for the reset handler, of course).
@@ -526,28 +526,28 @@ done_copy:
  */
 NMI_Handler:
 	b	.
-	    
+
 HardFault_Handler:
 	b	.
-	    
+
 MemManage_Handler:
 	b	.
-	    
+
 BusFault_Handler:
 	b	.
-	    
+
 UsageFault_Handler:
 	b	.
-	    
+
 SVC_Handler:
 	b	.
-	    
+
 DebugMon_Handler:
 	b	.
-	    
+
 PendSV_Handler:
 	b	.
-	    
+
 SysTick_Handler:
 	b	.
 
@@ -668,5 +668,5 @@ SWI_IRQHandler:
 DefaultISR:
 	b	.
 
- 
+
 	.end
