@@ -8,8 +8,8 @@
 #define PID_SOF   0x5
 #define PID_SETUP 0xd
 
-#define ENDP0_SIZE 64
-#define ENDP1_SIZE 64
+#define ENDP0_SIZE 8
+#define ENDP1_SIZE 4
 
 typedef struct {
   union {
@@ -94,13 +94,13 @@ static uint16_t endp0_tx_datalen = 0; //length of data remaining to send
 static uint8_t dev_descriptor[] = {
   18,                           //bLength
   1,                            //bDescriptorType
-  0x00, 0x02,                   //bcdUSB
-  0xff,                         //bDeviceClass
+  0x10, 0x01,                   //bcdUSB
+  0x00,                         //bDeviceClass
   0x00,                         //bDeviceSubClass
   0x00,                         //bDeviceProtocl
   ENDP0_SIZE,                   //bMaxPacketSize0
-  0xc0, 0x16,                   //idVendor
-  0xdc, 0x05,                   //idProduct
+  0x62, 0x0f,                   //idVendor
+  0x01, 0x10,                   //idProduct
   0x01, 0x00,                   //bcdDevice
   1,                            //iManufacturer
   2,                            //iProduct
@@ -115,29 +115,37 @@ static uint8_t dev_descriptor[] = {
 static uint8_t cfg_descriptor[] = {
   9,                            //bLength
   2,                            //bDescriptorType
-  9 + 9 + 7, 0x00,              //wTotalLength
+  34, 0x00,                     //wTotalLength
   1,                            //bNumInterfaces
   1,                            //bConfigurationValue,
   0,                            //iConfiguration
-  0x80,                         //bmAttributes
-  250,                          //bMaxPower
+  0xa0,                         //bmAttributes (0x80, 0x40 = power, 0x20 = wakeup)
+  50,                           //bMaxPower (50 = 100mA)
   /* INTERFACE 0 BEGIN */
   9,                            //bLength
   4,                            //bDescriptorType
   0,                            //bInterfaceNumber
   0,                            //bAlternateSetting
   1,                            //bNumEndpoints
-  0xff,                         //bInterfaceClass
-  0x00,                         //bInterfaceSubClass,
-  0x00,                         //bInterfaceProtocol
+  0x03,                         //bInterfaceClass (HID)
+  0x01,                         //bInterfaceSubClass (Boot interface)
+  0x02,                         //bInterfaceProtocol (Mouse)
   0,                            //iInterface
+  /* INTERFACE 0, HID BEGIN */
+  9,                            //bLength
+  0x21,                         //bDescriptorType (HID)
+  0x10, 0x01,                   //bcdHID
+  0,                            //bCountryCode
+  1,                            //bNumDescriptors
+  34,                           //bDescriptorType (REPORT)
+  52, 0,                        //wDescriptorLength
   /* INTERFACE 0, ENDPOINT 1 BEGIN */
   7,                            //bLength
-  5,                            //bDescriptorType,
-  0x81,                         //bEndpointAddress,
-  0x02,                         //bmAttributes, bulk endpoint
-  ENDP1_SIZE, 0x00,             //wMaxPacketSize,
-  0                             //bInterval
+  5,                            //bDescriptorType (Endpoint)
+  0x81,                         //bEndpointAddress (endpoint 1, in)
+  0x03,                         //bmAttributes (interrupt)
+  ENDP1_SIZE, 0x00,             //wMaxPacketSize
+  0x0a,                         //bInterval (10ms)
       /* INTERFACE 0, ENDPOINT 1 END */
       /* INTERFACE 0 END */
 };
@@ -149,19 +157,18 @@ static str_descriptor_t lang_descriptor = {
 };
 
 static str_descriptor_t manuf_descriptor = {
-  .bLength = 2 + 15 * 2,
+  .bLength = 2 + 12 * 2,
   .bDescriptorType = 3,
   .wString =
-      {'k', 'e', 'v', 'i', 'n', 'c', 'u', 'z', 'n', 'e', 'r', '.', 'c',
-       'o', 'm'}
+      {'M', 'i', 'k', 'e', ' ', 'C', 'l', 'e', 'm', 'e', 'n', 't'}
 };
 
 static str_descriptor_t product_descriptor = {
-  .bLength = 2 + 15 * 2,
+  .bLength = 2 + 17 * 2,
   .bDescriptorType = 3,
   .wString =
-      {'T', 'e', 'e', 'n', 's', 'y', '3', '.', '1', ' ', 'S', 'c', 'o',
-       'p', 'e'}
+      {'T', 'e', 'e', 'n', 's', 'y', ' ', 'M', 'o', 'u', 's', 'e',
+       'M', 'o', 'v', 'e', 'r'}
 };
 
 static const descriptor_entry_t descriptors[] = {
@@ -171,9 +178,9 @@ static const descriptor_entry_t descriptors[] = {
   ,
   {0x0300, 0x0000, &lang_descriptor, 4}
   ,
-  {0x0301, 0x0409, &manuf_descriptor, 2 + 15 * 2}
+  {0x0301, 0x0409, &manuf_descriptor, 2 + 12 * 2}
   ,
-  {0x0302, 0x0409, &product_descriptor, 2 + 15 * 2}
+  {0x0302, 0x0409, &product_descriptor, 2 + 17 * 2}
   ,
   {0x0000, 0x0000, NULL, 0}
 };
