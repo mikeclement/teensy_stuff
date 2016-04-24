@@ -3,6 +3,10 @@
 
 #include "buffers.h"
 
+/*
+ * Endpoint message types and sizes
+ */
+
 #define PID_OUT   0x1
 #define PID_IN    0x9
 #define PID_SOF   0x5
@@ -10,6 +14,10 @@
 
 #define ENDP0_SIZE 8
 #define ENDP1_SIZE 4
+
+/*
+ * Struct definitions
+ */
 
 typedef struct {
   union {
@@ -37,6 +45,10 @@ typedef struct {
   uint8_t length;
 } descriptor_entry_t;
 
+/*
+ * Buffer Description Tables
+ */
+
 #define BDT_BC_SHIFT   16
 #define BDT_OWN_MASK   0x80
 #define BDT_DATA1_MASK 0x40
@@ -48,13 +60,8 @@ typedef struct {
 #define BDT_DESC(count, data) ((count << BDT_BC_SHIFT) | BDT_OWN_MASK | (data ? BDT_DATA1_MASK : 0x00) | BDT_DTS_MASK)
 #define BDT_PID(desc) ((desc >> 2) & 0xF)
 
-/**
- * Buffer Descriptor Table entry
- * There are two entries per direction per endpoint:
- *   In  Even/Odd
- *   Out Even/Odd
- * A bidirectional endpoint would then need 4 entries
- */
+// Buffer Descriptor Table entry
+// NOTE: There are two entries per direction per endpoint (4 total)
 typedef struct {
   uint32_t desc;
   void *addr;
@@ -70,27 +77,14 @@ typedef struct {
 #define ODD  1
 #define BDT_INDEX(endpoint, tx, odd) ((endpoint << 2) | (tx << 1) | odd)
 
-/**
- * Buffer descriptor table, aligned to a 512-byte boundary (see linker file)
- */
+// Buffer descriptor table, aligned to a 512-byte boundary (see linker file)
 __attribute__ ((aligned(512), used))
 static bdt_t table[(USB_N_ENDPOINTS + 1) * 4];  //max endpoints is 15 + 1 control
 
-/**
- * Endpoint 0 receive buffers (2x64 bytes)
+/*
+ * Descriptors
  */
-static uint8_t endp0_rx[2][ENDP0_SIZE];
 
-static const uint8_t *endp0_tx_dataptr = NULL;  //pointer to current transmit chunk
-static uint16_t endp0_tx_datalen = 0; //length of data remaining to send
-
-/**
- * Device descriptor
- * NOTE: This cannot be const because without additional attributes, it will
- * not be placed in a part of memory that the usb subsystem can access. I
- * have a suspicion that this location is somewhere in flash, but not copied
- * to RAM.
- */
 static uint8_t dev_descriptor[] = {
   18,                           //bLength
   1,                            //bDescriptorType
@@ -108,10 +102,6 @@ static uint8_t dev_descriptor[] = {
   1,                            //bNumConfigurations
 };
 
-/**
- * Configuration descriptor
- * NOTE: Same thing about const applies here
- */
 static uint8_t cfg_descriptor[] = {
   9,                            //bLength
   2,                            //bDescriptorType
@@ -146,8 +136,38 @@ static uint8_t cfg_descriptor[] = {
   0x03,                         //bmAttributes (interrupt)
   ENDP1_SIZE, 0x00,             //wMaxPacketSize
   0x0a,                         //bInterval (10ms)
-      /* INTERFACE 0, ENDPOINT 1 END */
-      /* INTERFACE 0 END */
+  /* INTERFACE 0, ENDPOINT 1 END */
+  /* INTERFACE 0 END */
+};
+
+static uint8_t report_descriptor[] = {
+  0x05, 0x01,                   // Usage Page (Generic Desktop)
+  0x09, 0x02,                   // Usage (Mouse)
+  0xA1, 0x01,                   // Collection (Application)
+  0x09, 0x01,                   // Usage (Pointer)
+  0xA1, 0x00,                   // Collection (Physical)
+  0x05, 0x09,                   // Usage Page (Buttons)
+  0x19, 0x01,                   // Usage Minimum (01)
+  0x29, 0x05,                   // Usage Maximum (01)
+  0x15, 0x00,                   // Logical Minimum (0)
+  0x25, 0x01,                   // Logical Maximum (1)
+  0x95, 0x05,                   // Report Count (5)
+  0x75, 0x01,                   // Report Size (1)
+  0x81, 0x02,                   // Input (Data, Variable, Absolute)
+  0x95, 0x01,                   // Report Count (1)
+  0x75, 0x03,                   // Report Size (3)
+  0x81, 0x01,                   // Input (Constant) for padding
+  0x05, 0x01,                   // Usage Page (Generic Desktop)
+  0x09, 0x30,                   // Usage (X)
+  0x09, 0x31,                   // Usage (Y)
+  0x09, 0x38,                   // Usage (Wheel)
+  0x15, 0x81,                   // Logical Minimum (-127)
+  0x25, 0x7F,                   // Logical Maximum (127)
+  0x75, 0x08,                   // Report Size (8)
+  0x95, 0x03,                   // Report Count (3)
+  0x81, 0x06,                   // Input (Data, Variable, Relative)
+  0xC0,                         // End Collection (Physical)
+  0xC0                          // End Collection (Application)
 };
 
 static str_descriptor_t lang_descriptor = {
@@ -159,16 +179,14 @@ static str_descriptor_t lang_descriptor = {
 static str_descriptor_t manuf_descriptor = {
   .bLength = 2 + 12 * 2,
   .bDescriptorType = 3,
-  .wString =
-      {'M', 'i', 'k', 'e', ' ', 'C', 'l', 'e', 'm', 'e', 'n', 't'}
+  .wString = {'M', 'i', 'k', 'e', ' ', 'C', 'l', 'e', 'm', 'e', 'n', 't'}
 };
 
 static str_descriptor_t product_descriptor = {
   .bLength = 2 + 17 * 2,
   .bDescriptorType = 3,
-  .wString =
-      {'T', 'e', 'e', 'n', 's', 'y', ' ', 'M', 'o', 'u', 's', 'e',
-       'M', 'o', 'v', 'e', 'r'}
+  .wString = {'T', 'e', 'e', 'n', 's', 'y', ' ', 'M', 'o', 'u', 's', 'e',
+              'M', 'o', 'v', 'e', 'r'}
 };
 
 static const descriptor_entry_t descriptors[] = {
@@ -182,10 +200,26 @@ static const descriptor_entry_t descriptors[] = {
   ,
   {0x0302, 0x0409, &product_descriptor, 2 + 17 * 2}
   ,
+  {0x2200, 0x0000, report_descriptor, sizeof(report_descriptor)}
+  ,
   {0x0000, 0x0000, NULL, 0}
 };
 
+/*
+ * ENDPOINT 0
+ */
+
+// Receive buffers
+static uint8_t endp0_rx[2][ENDP0_SIZE];
+
+// Send buffers
+static const uint8_t *endp0_tx_dataptr = NULL;  //pointer to current transmit chunk
+static uint16_t endp0_tx_datalen = 0; //length of data remaining to send
+
+// NOTE: used in interrupt handler below, need to be global
 static uint8_t endp0_odd, endp0_data = 0;
+
+// Transmit some data
 static void usb_endp0_transmit(const void *data, uint8_t length)
 {
   table[BDT_INDEX(0, TX, endp0_odd)].addr = (void *) data;
@@ -195,9 +229,7 @@ static void usb_endp0_transmit(const void *data, uint8_t length)
   endp0_data ^= 1;
 }
 
-/**
- * Endpoint 0 setup handler
- */
+// Setup handler
 static void usb_endp0_handle_setup(setup_t * packet)
 {
   const descriptor_entry_t *entry;
@@ -269,9 +301,7 @@ stall:
       USB_ENDPT_EPTXEN_MASK | USB_ENDPT_EPHSHK_MASK;
 }
 
-/**
- * Endpoint 0 handler
- */
+// Endpoint 0 handler
 void usb_endp0_handler(uint8_t stat)
 {
   static setup_t last_setup;
@@ -281,9 +311,8 @@ void usb_endp0_handler(uint8_t stat)
 
   //determine which bdt we are looking at here
   bdt_t *bdt =
-      &table[BDT_INDEX
-             (0, (stat & USB_STAT_TX_MASK) >> USB_STAT_TX_SHIFT,
-              (stat & USB_STAT_ODD_MASK) >> USB_STAT_ODD_SHIFT)];
+      &table[BDT_INDEX(0, (stat & USB_STAT_TX_MASK) >> USB_STAT_TX_SHIFT,
+                       (stat & USB_STAT_ODD_MASK) >> USB_STAT_ODD_SHIFT)];
 
   switch (BDT_PID(bdt->desc)) {
   case PID_SETUP:
@@ -333,73 +362,68 @@ void usb_endp0_handler(uint8_t stat)
   USB0_CTL = USB_CTL_USBENSOFEN_MASK;
 }
 
-static uint8_t endp1_odd, endp1_data1 = 0;
+/*
+ * ENDPOINT 1
+ */
+
+static uint8_t endp1_odd, endp1_data = 0;
+
 static void usb_endp1_transmit(const void *data, uint8_t length)
 {
-  table[BDT_INDEX(1, TX, endp0_odd)].addr = (void *) data;
-  table[BDT_INDEX(1, TX, endp0_odd)].desc = BDT_DESC(length, endp1_data1);
+  table[BDT_INDEX(1, TX, endp1_odd)].addr = (void *) data;
+  table[BDT_INDEX(1, TX, endp1_odd)].desc = BDT_DESC(length, endp1_data);
   //toggle the odd and data bits
   endp1_odd ^= 1;
-  endp1_data1 ^= 1;
+  endp1_data ^= 1;
 }
 
-/**
- * Endpoint 1 handler
- */
+// Endpoint 1 handler
 void usb_endp1_handler(uint8_t stat)
 {
-  static uint8_t *buffer = NULL;
-  static uint16_t length = 0;
+  static uint8_t report[] = {0x00, 0x01, 0x00, 0x00};
 
   //determine which bdt we are looking at here
   bdt_t *bdt =
-      &table[BDT_INDEX
-             (0, (stat & USB_STAT_TX_MASK) >> USB_STAT_TX_SHIFT,
-              (stat & USB_STAT_ODD_MASK) >> USB_STAT_ODD_SHIFT)];
+      &table[BDT_INDEX(1, (stat & USB_STAT_TX_MASK) >> USB_STAT_TX_SHIFT,
+                       (stat & USB_STAT_ODD_MASK) >> USB_STAT_ODD_SHIFT)];
 
-  switch (BDT_PID(bdt->desc)) {
-  case PID_SETUP:
-    //we are now done with the buffer
-    bdt->desc = BDT_DESC(ENDP1_SIZE, 1);
-
-    //clear any pending IN stuff
-    table[BDT_INDEX(1, TX, EVEN)].desc = 0;
-    table[BDT_INDEX(1, TX, ODD)].desc = 0;
-    endp1_data1 = 1;
-    //unfreeze this endpoint
-    USB0_CTL = USB_CTL_USBENSOFEN_MASK;
-  case PID_IN:
-    if (buffer) {
-
-    }
-    break;
+  if (BDT_PID(bdt->desc) == PID_IN) {
+    usb_endp1_transmit(report, 4);
   }
+
+  //unfreeze this endpoint
+  USB0_CTL = USB_CTL_USBENSOFEN_MASK;
 }
 
-static void (*handlers[16]) (uint8_t) = {
-usb_endp0_handler,
-      usb_endp1_handler,
-      usb_endp2_handler,
-      usb_endp3_handler,
-      usb_endp4_handler,
-      usb_endp5_handler,
-      usb_endp6_handler,
-      usb_endp7_handler,
-      usb_endp8_handler,
-      usb_endp9_handler,
-      usb_endp10_handler,
-      usb_endp11_handler,
-      usb_endp12_handler,
-      usb_endp13_handler, usb_endp14_handler, usb_endp15_handler,};
-
-/**
- * Default handler for USB endpoints that does nothing
+/*
+ * Register endpoint handlers
  */
+
+static void (*handlers[16]) (uint8_t) = {
+  usb_endp0_handler,
+  usb_endp1_handler,
+  usb_endp2_handler,
+  usb_endp3_handler,
+  usb_endp4_handler,
+  usb_endp5_handler,
+  usb_endp6_handler,
+  usb_endp7_handler,
+  usb_endp8_handler,
+  usb_endp9_handler,
+  usb_endp10_handler,
+  usb_endp11_handler,
+  usb_endp12_handler,
+  usb_endp13_handler,
+  usb_endp14_handler,
+  usb_endp15_handler,
+};
+
+// Default handler for USB endpoints that does nothing
 static void usb_endp_default_handler(uint8_t stat)
 {
 }
 
-//weak aliases as "defaults" for the usb endpoint handlers
+// weak aliases as "defaults" for the usb endpoint handlers
 void usb_endp2_handler(uint8_t)
     __attribute__ ((weak, alias("usb_endp_default_handler")));
 void usb_endp3_handler(uint8_t)
@@ -428,6 +452,10 @@ void usb_endp14_handler(uint8_t)
     __attribute__ ((weak, alias("usb_endp_default_handler")));
 void usb_endp15_handler(uint8_t)
     __attribute__ ((weak, alias("usb_endp_default_handler")));
+
+/*
+ * Device initialization
+ */
 
 void usb_init(void)
 {
@@ -472,6 +500,10 @@ void usb_init(void)
   //7: Enable pull-up resistor on D+ (Full speed, 12Mbit/s)
   USB0_CONTROL = USB_CONTROL_DPPULLUPNONOTG_MASK;
 }
+
+/*
+ * USB interrupt handler
+ */
 
 void USBOTG_IRQHandler(void)
 {
