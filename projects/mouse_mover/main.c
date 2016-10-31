@@ -38,12 +38,15 @@ int main(void)
 
   usb_init();
 
-  enable_irq(IRQ(INT_PIT1));
+  // NOTE uncomment to enable blinky lights via interrupt
+  //enable_irq(IRQ(INT_PIT1));
+
   EnableInterrupts while (1) {
-    LED2_ON;
-    for (n = 0; n < s; n++) ;
-    LED2_OFF;
-    for (n = 0; n < s; n++) ;
+    // NOTE uncomment to enable blinky lights via main loop
+    // LED_ON;
+    // for (n = 0; n < 1000000; n++);
+    // LED_OFF;
+    // for (n = 0; n < 1000000; n++);
   }
 
   return 0;                     // should never get here!

@@ -15,6 +15,10 @@
 #define ENDP0_SIZE 8
 #define ENDP1_SIZE 4
 
+// TODO remove after debugging
+#define LED_ON  GPIOC_PSOR=(1<<5)
+#define LED_OFF GPIOC_PCOR=(1<<5)
+
 /*
  * Struct definitions
  */
@@ -116,7 +120,7 @@ static uint8_t cfg_descriptor[] = {
   4,                            //bDescriptorType
   0,                            //bInterfaceNumber
   0,                            //bAlternateSetting
-  1,                            //bNumEndpoints
+  2,                            //bNumEndpoints
   0x03,                         //bInterfaceClass (HID)
   0x01,                         //bInterfaceSubClass (Boot interface)
   0x02,                         //bInterfaceProtocol (Mouse)
@@ -366,6 +370,8 @@ void usb_endp0_handler(uint8_t stat)
  * ENDPOINT 1
  */
 
+static uint8_t endp1_rx[2][ENDP1_SIZE];
+
 static uint8_t endp1_odd, endp1_data = 0;
 
 static void usb_endp1_transmit(const void *data, uint8_t length)
@@ -387,12 +393,18 @@ void usb_endp1_handler(uint8_t stat)
       &table[BDT_INDEX(1, (stat & USB_STAT_TX_MASK) >> USB_STAT_TX_SHIFT,
                        (stat & USB_STAT_ODD_MASK) >> USB_STAT_ODD_SHIFT)];
 
-  if (BDT_PID(bdt->desc) == PID_IN) {
-    usb_endp1_transmit(report, 4);
+  switch (BDT_PID(bdt->desc)) {
+  case PID_SETUP:
+    break;
+  case PID_SOF:
+    break;
+  case PID_IN:
+    usb_endp1_transmit(report, sizeof(report));
+    break;
+  case PID_OUT:
+    bdt->desc = BDT_DESC(ENDP1_SIZE, 1);
+    break;
   }
-
-  //unfreeze this endpoint
-  USB0_CTL = USB_CTL_USBENSOFEN_MASK;
 }
 
 /*
@@ -525,11 +537,26 @@ void USBOTG_IRQHandler(void)
     table[BDT_INDEX(0, TX, EVEN)].desc = 0;
     table[BDT_INDEX(0, TX, ODD)].desc = 0;
 
+    //initialize endpoint 1 buffers
+    endp1_odd = 0;
+    table[BDT_INDEX(1, RX, EVEN)].desc = BDT_DESC(ENDP1_SIZE, 0);
+    table[BDT_INDEX(1, RX, EVEN)].addr = endp1_rx[0];
+    table[BDT_INDEX(1, RX, ODD)].desc = BDT_DESC(ENDP1_SIZE, 0);
+    table[BDT_INDEX(1, RX, ODD)].addr = endp1_rx[1];
+    table[BDT_INDEX(1, TX, EVEN)].desc = 0;
+    table[BDT_INDEX(1, TX, ODD)].desc = 0;
+
     //initialize endpoint0 to 0x0d (41.5.23)
     //transmit, recieve, and handshake
     USB0_ENDPT0 =
         USB_ENDPT_EPRXEN_MASK | USB_ENDPT_EPTXEN_MASK |
         USB_ENDPT_EPHSHK_MASK;
+
+    // TODO determine if USB_ENDPT_EPHSHK_MASK should be set
+    // Without it, endpoint1 requests appear to come in but are not processed
+    // With it, the first request comes in, and then traffic stalls (crashes?)
+    USB0_ENDPT1 =
+        USB_ENDPT_EPRXEN_MASK | USB_ENDPT_EPTXEN_MASK;
 
     //clear all interrupts...this is a reset
     USB0_ERRSTAT = 0xff;
@@ -555,20 +582,25 @@ void USBOTG_IRQHandler(void)
     //handle start of frame token
     USB0_ISTAT = USB_ISTAT_SOFTOK_MASK;
   }
-  if (status & USB_ISTAT_TOKDNE_MASK) {
+
+  // Do in while loop as interrupts might be queued
+  while (status & USB_ISTAT_TOKDNE_MASK) {
     //handle completion of current token being processed
     stat = USB0_STAT;
     endpoint = stat >> 4;
     handlers[endpoint & 0xf] (stat);
 
     USB0_ISTAT = USB_ISTAT_TOKDNE_MASK;
+    status = USB0_ISTAT;
   }
+
   if (status & USB_ISTAT_SLEEP_MASK) {
     //handle USB sleep
     USB0_ISTAT = USB_ISTAT_SLEEP_MASK;
   }
   if (status & USB_ISTAT_STALL_MASK) {
     //handle usb stall
+    USB0_ENDPT0 &= ~USB_ENDPT_EPSTALL_MASK;
     USB0_ISTAT = USB_ISTAT_STALL_MASK;
   }
 }
