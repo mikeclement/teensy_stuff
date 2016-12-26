@@ -56,6 +56,9 @@ make upload
 
 `third_party/Teensy3x`, which contains the basis for the makefiles, headers, and libraries used here, comes from http://www.seanet.com/~karllunt/bareteensy31.html
 
+`third_party/Teensy3xLib`, which contains a collection of bare-metal libraries and examples, comes from
+https://www.seanet.com/~karllunt/bareteensy31libs.html
+
 `third_party/teensy-oscilloscope`, which contains bare metal code for initializing the USB interface, comes from https://github.com/kcuzner/teensy-oscilloscope/ (and more detail is available here: http://kevincuzner.com/2014/12/12/teensy-3-1-bare-metal-writing-a-usb-driver/)
 
 `third_party/teensy_loader_cli`, which contains the command line downloader for hex files, comes from https://github.com/PaulStoffregen/teensy_loader_cli
