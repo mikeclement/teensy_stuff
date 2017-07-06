@@ -27,8 +27,6 @@ int32_t			mcg_clk_khz;
 int32_t			core_clk_khz;
 int32_t			periph_clk_khz;
 
-
-
 /*
  *  start()      initial entry point from the C run-time routine (crt0.s)
  *
@@ -50,76 +48,73 @@ void start(void)
 	sysinit();			// Perform processor initialization
 	main();				// run the main program
 
-	while (1)   ;		// control should never get here!
+	while (1);		// control should never get here!
 }
-
-
 
 /********************************************************************/
 void sysinit (void)
 {
-/*
- * Enable all of the port clocks. These have to be enabled to configure
- * pin muxing options, so most code will need all of these on anyway.
- */
+  /*
+   * Enable all of the port clocks. These have to be enabled to configure
+   * pin muxing options, so most code will need all of these on anyway.
+   */
 	SIM_SCGC5 |= (SIM_SCGC5_PORTA_MASK
               | SIM_SCGC5_PORTB_MASK
               | SIM_SCGC5_PORTC_MASK
               | SIM_SCGC5_PORTD_MASK
-              | SIM_SCGC5_PORTE_MASK );
+              | SIM_SCGC5_PORTE_MASK);
 
-/* Ramp up the system clock
- * Set the system dividers
- * NOTE: The PLL init will not configure the system clock dividers,
- * so they must be configured appropriately before calling the PLL
- * init function to ensure that clocks remain in valid ranges.
- */
-    SIM_CLKDIV1 = ( 0
-                    | SIM_CLKDIV1_OUTDIV1(0)
-                    | SIM_CLKDIV1_OUTDIV2(1)
-                    | SIM_CLKDIV1_OUTDIV4(2) );
+  /* Ramp up the system clock
+   * Set the system dividers
+   * NOTE: The PLL init will not configure the system clock dividers,
+   * so they must be configured appropriately before calling the PLL
+   * init function to ensure that clocks remain in valid ranges.
+   */
+  SIM_CLKDIV1 = ( 0
+                | SIM_CLKDIV1_OUTDIV1(0)
+                | SIM_CLKDIV1_OUTDIV2(1)
+                | SIM_CLKDIV1_OUTDIV4(2));
 
-/* releases hold with ACKISO:  Only has an effect if recovering from VLLS1, VLLS2, or VLLS3
- * if ACKISO is set you must clear ackiso before calling pll_init
- * or pll init hangs waiting for OSC to initialize.
- * if osc enabled in low power modes - enable it first before ack.
- * if I/O needs to be maintained without glitches enable outputs and modules first before ack.
- */
-    if (PMC_REGSC &  PMC_REGSC_ACKISO_MASK)
-        PMC_REGSC |= PMC_REGSC_ACKISO_MASK;
+  /* releases hold with ACKISO:  Only has an effect if recovering from VLLS1, VLLS2, or VLLS3
+   * if ACKISO is set you must clear ackiso before calling pll_init
+   * or pll init hangs waiting for OSC to initialize.
+   * if osc enabled in low power modes - enable it first before ack.
+   * if I/O needs to be maintained without glitches enable outputs and modules first before ack.
+   */
+  if (PMC_REGSC &  PMC_REGSC_ACKISO_MASK)
+      PMC_REGSC |= PMC_REGSC_ACKISO_MASK;
 
-/* Initialize PLL
- * PLL will be the source for MCG CLKOUT so the core, system, and flash clocks
- * are derived from it.
- */
+  /* Initialize PLL
+   * PLL will be the source for MCG CLKOUT so the core, system, and flash clocks
+   * are derived from it.
+   */
 	mcg_clk_hz = pll_init(PRDIV_VAL, VDIV_VAL);	// Use the output from this PLL as the MCGOUT
 
-/* Check the value returned from pll_init() to make sure there wasn't an error.
- */
+  /* Check the value returned from pll_init() to make sure there wasn't an error.
+   */
 	if (mcg_clk_hz < 0x100)
 	{
 		while(1);
 	}
 
-/*
- * Use the value obtained from the pll_init function to define variables
- * for the core clock in kHz and also the peripheral clock. These
- * variables can be used by other functions that need awareness of the
- * system frequency.
- */
+  /*
+   * Use the value obtained from the pll_init function to define variables
+   * for the core clock in kHz and also the peripheral clock. These
+   * variables can be used by other functions that need awareness of the
+   * system frequency.
+   */
 	mcg_clk_khz = mcg_clk_hz / 1000;
 	core_clk_khz = mcg_clk_khz / (((SIM_CLKDIV1 & SIM_CLKDIV1_OUTDIV1_MASK) >> 28)+ 1);
-  	periph_clk_khz = mcg_clk_khz / (((SIM_CLKDIV1 & SIM_CLKDIV1_OUTDIV2_MASK) >> 24)+ 1);
+  periph_clk_khz = mcg_clk_khz / (((SIM_CLKDIV1 & SIM_CLKDIV1_OUTDIV2_MASK) >> 24)+ 1);
 
-/*
- *  For debugging purposes, enable the trace clock and/or FB_CLK so that
- *  we'll be able to monitor clocks and know the PLL is at the frequency
- *  that we expect.
- */
-	//fb_clk_init();
-	//trace_clk_init();
+  /*
+   *  For debugging purposes, enable the trace clock and/or FB_CLK so that
+   *  we'll be able to monitor clocks and know the PLL is at the frequency
+   *  that we expect.
+   */
+	// fb_clk_init();
+	// trace_clk_init();
 }
-
 
 #if 0
 /********************************************************************/
@@ -202,19 +197,19 @@ int32_t  pll_init(int8_t  prdiv_val, int8_t  vdiv_val)
 		return 0x1;                                           // return error code
 	}
 
-/*
- *  Removed original checks on crystal frequency; Teensy 3.x always uses 16 MHz
- *  crystal as external source (crystal_val = 16000000).
- */
+  /*
+   *  Removed original checks on crystal frequency; Teensy 3.x always uses 16 MHz
+   *  crystal as external source (crystal_val = 16000000).
+   */
 	crystal_val = 16000000;
-/*
- *  Removed check of high-gain flag; Teensy 3.x always uses low-power (HGO = 0).
- */
+  /*
+   *  Removed check of high-gain flag; Teensy 3.x always uses low-power (HGO = 0).
+   */
 	hgo_val = 0;
-/*
- *  Removed check of external select; Teensy 3.x always uses external crystal oscillator
- *  (erefs_val = 1).
- */
+  /*
+   *  Removed check of external select; Teensy 3.x always uses external crystal oscillator
+   *  (erefs_val = 1).
+   */
 	erefs_val = 1;
 
 	// Check PLL divider settings are within spec.
@@ -238,115 +233,113 @@ int32_t  pll_init(int8_t  prdiv_val, int8_t  vdiv_val)
 	temp_reg |= (MCG_C2_RANGE0(2) | (hgo_val << MCG_C2_HGO0_SHIFT) | (erefs_val << MCG_C2_EREFS0_SHIFT));
 	MCG_C2 = temp_reg;
 
-/*
- *  Removed tests around frdiv_val.  The frdiv_val is fixed at 4 because the Teensy
- *  always uses a 16 MHz crystal.
- */
+  /*
+   *  Removed tests around frdiv_val.  The frdiv_val is fixed at 4 because the Teensy
+   *  always uses a 16 MHz crystal.
+   */
 	frdiv_val = 4;
 
-/*
- *  Select external oscillator and Reference Divider and clear IREFS to start ext osc
- *  If IRCLK is required it must be enabled outside of this driver, existing state
- *  will be maintained.
- *  CLKS=2, FRDIV=frdiv_val, IREFS=0, IRCLKEN=0, IREFSTEN=0
- */
+  /*
+   *  Select external oscillator and Reference Divider and clear IREFS to start ext osc
+   *  If IRCLK is required it must be enabled outside of this driver, existing state
+   *  will be maintained.
+   *  CLKS=2, FRDIV=frdiv_val, IREFS=0, IRCLKEN=0, IREFSTEN=0
+   */
 	temp_reg = MCG_C1;
 	temp_reg &= ~(MCG_C1_CLKS_MASK | MCG_C1_FRDIV_MASK | MCG_C1_IREFS_MASK); // Clear values in these fields
 	temp_reg = MCG_C1_CLKS(2) | MCG_C1_FRDIV(frdiv_val); // Set the required CLKS and FRDIV values
 	MCG_C1 = temp_reg;
 
-/*
- *  if the external oscillator is used need to wait for OSCINIT to set
- */
+  /*
+   *  if the external oscillator is used need to wait for OSCINIT to set
+   */
 	for (i = 0 ; i < 10000 ; i++)
 	{
 		if (MCG_S & MCG_S_OSCINIT0_MASK) break; // jump out early if OSCINIT sets before loop finishes
 	}
 	if (!(MCG_S & MCG_S_OSCINIT0_MASK)) return 0x23; // check bit is really set and return with error if not set
 
-/*
- *  Wait for clock status bits to show clock source is ext ref clk
- */
+  /*
+   *  Wait for clock status bits to show clock source is ext ref clk
+   */
 	for (i = 0 ; i < 2000 ; i++)
 	{
 		if (((MCG_S & MCG_S_CLKST_MASK) >> MCG_S_CLKST_SHIFT) == 0x2) break; // jump out early if CLKST shows EXT CLK slected before loop finishes
 	}
 	if (((MCG_S & MCG_S_CLKST_MASK) >> MCG_S_CLKST_SHIFT) != 0x2) return 0x1A; // check EXT CLK is really selected and return with error if not
 
-/*
- *  Now in FBE
- *  It is recommended that the clock monitor is enabled when using an external clock
- *  as the clock source/reference.
- *  It is enabled here but can be removed if this is not required.
- */
+  /*
+   *  Now in FBE
+   *  It is recommended that the clock monitor is enabled when using an external clock
+   *  as the clock source/reference.
+   *  It is enabled here but can be removed if this is not required.
+   */
 	MCG_C6 |= MCG_C6_CME0_MASK;
 
-/*
- *  Configure PLL
- *  Configure MCG_C5
- *  If the PLL is to run in STOP mode then the PLLSTEN bit needs to be OR'ed
- *  in here or in user code.
- */
+  /*
+   *  Configure PLL
+   *  Configure MCG_C5
+   *  If the PLL is to run in STOP mode then the PLLSTEN bit needs to be OR'ed
+   *  in here or in user code.
+   */
 	temp_reg = MCG_C5;
 	temp_reg &= ~MCG_C5_PRDIV0_MASK;
 	temp_reg |= MCG_C5_PRDIV0(prdiv_val - 1);    //set PLL ref divider
 	MCG_C5 = temp_reg;
 
-/*
- *  Configure MCG_C6
- *  The PLLS bit is set to enable the PLL, MCGOUT still sourced from ext ref clk
- *  The loss of lock interrupt can be enabled by seperately OR'ing in the LOLIE bit in MCG_C6
- */
+  /*
+   *  Configure MCG_C6
+   *  The PLLS bit is set to enable the PLL, MCGOUT still sourced from ext ref clk
+   *  The loss of lock interrupt can be enabled by seperately OR'ing in the LOLIE bit in MCG_C6
+   */
 	temp_reg = MCG_C6;					// store present C6 value
 	temp_reg &= ~MCG_C6_VDIV0_MASK;		// clear VDIV settings
 	temp_reg |= MCG_C6_PLLS_MASK | MCG_C6_VDIV0(vdiv_val - 24); // write new VDIV and enable PLL
 	MCG_C6 = temp_reg;					// update MCG_C6
 
-/*
- *  wait for PLLST status bit to set
- */
+  /*
+   *  wait for PLLST status bit to set
+   */
 	for (i = 0 ; i < 2000 ; i++)
 	{
 		if (MCG_S & MCG_S_PLLST_MASK) break; // jump out early if PLLST sets before loop finishes
 	}
 	if (!(MCG_S & MCG_S_PLLST_MASK)) return 0x16; // check bit is really set and return with error if not set
 
-/*
- *  Wait for LOCK bit to set
- */
+  /*
+   *  Wait for LOCK bit to set
+   */
 	for (i = 0 ; i < 2000 ; i++)
 	{
 		if (MCG_S & MCG_S_LOCK0_MASK) break; // jump out early if LOCK sets before loop finishes
 	}
 	if (!(MCG_S & MCG_S_LOCK0_MASK)) return 0x44; // check bit is really set and return with error if not set
 
-/*
- *  Use actual PLL settings to calculate PLL frequency
- */
+  /*
+   *  Use actual PLL settings to calculate PLL frequency
+   */
 	prdiv = ((MCG_C5 & MCG_C5_PRDIV0_MASK) + 1);
 	vdiv = ((MCG_C6 & MCG_C6_VDIV0_MASK) + 24);
 
-/*
- *  now in PBE
- */
+  /*
+   *  now in PBE
+   */
 	MCG_C1 &= ~MCG_C1_CLKS_MASK; // clear CLKS to switch CLKS mux to select PLL as MCG_OUT
 
-/*
- *  Wait for clock status bits to update
- */
+  /*
+   *  Wait for clock status bits to update
+   */
 	for (i = 0 ; i < 2000 ; i++)
 	{
-	if (((MCG_S & MCG_S_CLKST_MASK) >> MCG_S_CLKST_SHIFT) == 0x3) break; // jump out early if CLKST = 3 before loop finishes
+    if (((MCG_S & MCG_S_CLKST_MASK) >> MCG_S_CLKST_SHIFT) == 0x3) break; // jump out early if CLKST = 3 before loop finishes
 	}
 	if (((MCG_S & MCG_S_CLKST_MASK) >> MCG_S_CLKST_SHIFT) != 0x3) return 0x1B; // check CLKST is set correctly and return with error if not
 
-/*
- *  Now in PEE
- */
+  /*
+   *  Now in PEE
+   */
 	return ((crystal_val / prdiv) * vdiv); //MCGOUT equals PLL output frequency
 } // pll_init
-
-
 
 /********************************************************************
  *

@@ -1,6 +1,6 @@
 /*
- * File:		arm_cm4.c
- * Purpose:		Generic high-level routines for ARM Cortex M4 processors
+ * File:    arm_cm4.c
+ * Purpose:    Generic high-level routines for ARM Cortex M4 processors
  *
  * Notes:
  * Modified 28 Apr 14  KEL
@@ -26,11 +26,11 @@
 
 void stop (void)
 {
-	/* Set the SLEEPDEEP bit to enable deep sleep mode (STOP) */
-	SCB_SCR |= SCB_SCR_SLEEPDEEP_MASK;
+  /* Set the SLEEPDEEP bit to enable deep sleep mode (STOP) */
+  SCB_SCR |= SCB_SCR_SLEEPDEEP_MASK;
 
-	/* WFI instruction will start entry into STOP mode */
-	asm("WFI");
+  /* WFI instruction will start entry into STOP mode */
+  asm("WFI");
 }
 /***********************************************************************/
 /*
@@ -46,13 +46,13 @@ void stop (void)
 
 void wait (void)
 {
-	/* Clear the SLEEPDEEP bit to make sure we go into WAIT (sleep) mode instead
-	 * of deep sleep.
-	 */
-	SCB_SCR &= ~SCB_SCR_SLEEPDEEP_MASK;
+  /* Clear the SLEEPDEEP bit to make sure we go into WAIT (sleep) mode instead
+   * of deep sleep.
+   */
+  SCB_SCR &= ~SCB_SCR_SLEEPDEEP_MASK;
 
-	/* WFI instruction will start entry into WAIT mode */
-	asm("WFI");
+  /* WFI instruction will start entry into WAIT mode */
+  asm("WFI");
 }
 /***********************************************************************/
 /*
@@ -64,8 +64,8 @@ void wait (void)
 
 void write_vtor (int vtor)
 {
-        /* Write the VTOR with the new value */
-        SCB_VTOR = vtor;
+  /* Write the VTOR with the new value */
+  SCB_VTOR = vtor;
 }
 /***********************************************************************/
 /*
@@ -81,36 +81,36 @@ void write_vtor (int vtor)
 
 void enable_irq (int irq)
 {
-    int div;
+  int div;
 
-    /* Make sure that the IRQ is an allowable number. Right now up to 110 is
-     * used.
-     */
-    if (irq > 110)				// if requested IRQ is out of range...
-		return;
+  /* Make sure that the IRQ is an allowable number. Right now up to 110 is
+   * used.
+   */
+  if (irq > 110)        // if requested IRQ is out of range...
+    return;
 
-    /* Determine which of the NVICISERs corresponds to the irq */
-    div = irq/32;
+  /* Determine which of the NVICISERs corresponds to the irq */
+  div = irq/32;
 
-    switch (div)
-    {
-    	case 0x0:
-              NVICICPR0 = 1 << (irq%32);
-              NVICISER0 = 1 << (irq%32);
-              break;
-    	case 0x1:
-              NVICICPR1 = 1 << (irq%32);
-              NVICISER1 = 1 << (irq%32);
-              break;
-    	case 0x2:
-              NVICICPR2 = 1 << (irq%32);
-              NVICISER2 = 1 << (irq%32);
-              break;
-    	case 0x3:
-              NVICICPR3 = 1 << (irq%32);
-              NVICISER3 = 1 << (irq%32);
-              break;
-    }
+  switch (div)
+  {
+  case 0x0:
+    NVICICPR0 = 1 << (irq%32);
+    NVICISER0 = 1 << (irq%32);
+    break;
+  case 0x1:
+    NVICICPR1 = 1 << (irq%32);
+    NVICISER1 = 1 << (irq%32);
+    break;
+  case 0x2:
+      NVICICPR2 = 1 << (irq%32);
+      NVICISER2 = 1 << (irq%32);
+      break;
+  case 0x3:
+    NVICICPR3 = 1 << (irq%32);
+    NVICISER3 = 1 << (irq%32);
+    break;
+  }
 }
 /***********************************************************************/
 /*
@@ -126,32 +126,32 @@ void enable_irq (int irq)
 
 void disable_irq (int irq)
 {
-    int div;
+  int div;
 
-    /* Make sure that the IRQ is an allowable number. Right now up to 110 is
-     * used.
-     */
-    if (irq > 110)						// if IRQ is outside legal range...
-		return;
+  /* Make sure that the IRQ is an allowable number. Right now up to 110 is
+   * used.
+   */
+  if (irq > 110)            // if IRQ is outside legal range...
+    return;
 
-    /* Determine which of the NVICICERs corresponds to the irq */
-    div = irq/32;
+  /* Determine which of the NVICICERs corresponds to the irq */
+  div = irq/32;
 
-    switch (div)
-    {
-    	case 0x0:
-               NVICICER0 = 1 << (irq%32);
-              break;
-    	case 0x1:
-              NVICICER1 = 1 << (irq%32);
-              break;
-    	case 0x2:
-              NVICICER2 = 1 << (irq%32);
-			  break;
-    	case 0x3:
-              NVICICER3 = 1 << (irq%32);
-              break;
-    }
+  switch (div)
+  {
+  case 0x0:
+    NVICICER0 = 1 << (irq%32);
+    break;
+  case 0x1:
+    NVICICER1 = 1 << (irq%32);
+    break;
+  case 0x2:
+    NVICICER2 = 1 << (irq%32);
+    break;
+  case 0x3:
+    NVICICER3 = 1 << (irq%32);
+    break;
+  }
 }
 
 #if 0
@@ -171,13 +171,13 @@ void disable_irq (int irq)
 void set_irq_priority (int irq, int prio)
 {
     /*irq priority pointer*/
-    uint8_t				*prio_reg;
+    uint8_t        *prio_reg;
 
     /* Make sure that the IRQ is an allowable number. Right now up to 110 is
      * used.
      */
-    if (irq > 110)					// if IRQ is outside legal range...
-		return;
+    if (irq > 110)          // if IRQ is outside legal range...
+    return;
 
     if (prio > 15)
         return;
@@ -192,5 +192,3 @@ void set_irq_priority (int irq, int prio)
 }
 /***********************************************************************/
 #endif
-
-

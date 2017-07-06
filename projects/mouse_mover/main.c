@@ -14,10 +14,10 @@ int main(void)
   uint32_t s;
   uint8_t mask;
 
-  PORTC_PCR5 = PORT_PCR_MUX(0x1); // LED is on PC5 (pin 13), config as GPIO (alt = 1)
-  PORTC_PCR7 = PORT_PCR_MUX(0x1); // LED2 is on PC7 (pin 12), config as GPIO (alt = 1)
-  GPIOC_PDDR = (1 << 5) | (1 << 7); // make this an output pin
-  LED_OFF;                      // start with LED off
+  PORTC_PCR5 = PORT_PCR_MUX(0x1);     // LED is on PC5 (pin 13), config as GPIO (alt = 1)
+  PORTC_PCR7 = PORT_PCR_MUX(0x1);     // LED2 is on PC7 (pin 12), config as GPIO (alt = 1)
+  GPIOC_PDDR = (1 << 5) | (1 << 7);   // make this an output pin
+  LED_OFF;                            // start with LED off
   LED2_OFF;
 
   v = (uint32_t) mcg_clk_hz;
@@ -32,7 +32,7 @@ int main(void)
   // turn on PIT
   PIT_MCR = 0x00;
   // Timer 1
-  PIT_LDVAL1 = 0x0003E7FF;      // setup timer 1 for 256000 cycles
+  PIT_LDVAL1 = 0x0003E7FF;          // setup timer 1 for 256000 cycles
   PIT_TCTRL1 = PIT_TCTRL_TIE_MASK;  // enable Timer 1 interrupts
   PIT_TCTRL1 |= PIT_TCTRL_TEN_MASK; // start Timer 1
 
